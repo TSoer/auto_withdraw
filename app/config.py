@@ -5,6 +5,9 @@ import json
 with open('app/abis/erc20.json', 'r') as f:
     ERC20_ABI = json.load(f)
 
+with open('app/abis/strk.json', 'r') as f:
+    STRK_ABI = json.load(f)
+
 RPC = "https://starknet-mainnet.public.blastapi.io"
 EXPLORER = 'https://starkscan.co/tx/'
 
@@ -17,7 +20,7 @@ TOKENS = {
     # "USDC": 0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8,
     # "USDT": 0x068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8,
     # "DAI": 0x00da114221cb83fa859dbdb4c44beeaa0bb37c7537ad5ae66fe5e0efd20e6eb3,
-    # "STRK": 00000000000000000000000000000000000000000000000000000000000000000,
+    # "STRK": 00000000000000000000000000000000000000000000000000000000000000000, <-
 }
 
 
