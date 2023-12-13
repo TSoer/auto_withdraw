@@ -1,6 +1,7 @@
 #!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
 
+import time
 from loguru import logger
 from typing import Union
 from starknet_py.hash.address import compute_address
@@ -153,6 +154,6 @@ class Client:
         except Exception as exc:
             logger.error(f"Couldn't send tx: {exc}")
 
-
-
-
+    async def test_ui_interface(self):
+        time.sleep(5)
+        logger.info('какуого худолжника начал ключить визул')
