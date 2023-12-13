@@ -14,6 +14,7 @@ from starknet_py.contract import Contract, PreparedFunctionCall
 
 
 class Client:
+    MAX_FEE = False
 
     def __init__(self, address, private_key, to_address):
         self.full_node_client = FullNodeClient(node_url=RPC)
@@ -43,12 +44,13 @@ class Client:
     async def do_withdraw(self):
         contract = self.get_contract()
         if self.address != self.to_address:
+            amount = self.get_balance()
             tx_hash = await self.send_transaction(interacted_contract=contract,
                                                   function_name='transfer',
                                                   recipient=self.to_address,
-                                                  amount=1000000000000000)
+                                                  amount=amount)
             if tx_hash:
-                logger.info('nhfypfrwbz jnghfdktyf')
+                logger.info(f'по кошельку {hex(self.address)} отработал')
                 return True
         else:
             logger.info("Адрес отправителя и получателя совпадаю")
@@ -90,18 +92,21 @@ class Client:
     async def send_transaction(self, interacted_contract, function_name='transfer', **kwargs) -> bool:
         try:
             logger.debug(f"[{hex(self.address)}] Sending tx...")
-
             prepared_tx = interacted_contract.functions[function_name].prepare(**kwargs)
-            fee = await self.estimate_fee(prepared_tx)
-            logger.info(f'Цена за транзакцию сейчас {fee} Wei')
-            tx = await prepared_tx.invoke(
-                                        max_fee=int(fee * 1.1),
-                                        # auto_estimate=True
-                                        )
+
+            if Client.MAX_FEE:
+                # она отличается тем что сеть дает цену и библиотека умнажает ее на 1.5
+                tx = prepared_tx.invoke(auto_estimate=True)
+                logger.info(f'цена за транзакцию беру максимальную которую предлагает сеть!!!')
+                # fee = self.account._get_max_fee()
+            else:
+                fee = await self.estimate_fee(prepared_tx)
+                logger.info(f'Цена за транзакцию сейчас {fee} Wei')
+                tx = await prepared_tx.invoke(max_fee=int(fee * 1.1))
             try:
-                receipt = await self.account.client.wait_for_tx(tx.hash, retries=15)
+                receipt = await self.account.client.wait_for_tx(tx.hash, retries=10)
                 block = receipt.block_number
-                print(block)
+                logger.debug(f"Транзакция ушла с кошелька {hex(self.address)} высота блока {block} хэш транзы {tx.hash}")
 
                 if block:
                     return True
@@ -114,3 +119,40 @@ class Client:
     async def get_balance(self, token_address=TOKENS.get('ETH'), decimals=18):
         balance = await self.account.get_balance(token_address=token_address)
         return balance
+
+    async def withdraw_all_eth(self, interacted_contract, function_name='transfer', **kwargs) -> bool:
+        """
+        Выводим все зефирки под завяску
+        Внимание это должна быть последняя транзакция потому что если зефира акк не сможет оплать транзакцию
+        """
+        try:
+            logger.debug(f"[{hex(self.address)}] Sending tx...")
+            prepared_tx = interacted_contract.functions[function_name].prepare(**kwargs)
+
+            if Client.MAX_FEE:
+                fee = await self.estimate_fee(prepared_tx)
+                max_fee = int(fee * self.account.ESTIMATED_FEE_MULTIPLIER)
+                kwargs['amount'] = kwargs['amount'] - max_fee
+                prepared_tx = interacted_contract.functions[function_name].prepare(**kwargs)
+                tx = await prepared_tx.invoke(max_fee=max_fee)
+            else:
+                fee = await self.estimate_fee(prepared_tx)
+                fee = int(fee * self.account.ESTIMATED_FEE_MULTIPLIER)
+                kwargs['amount'] = kwargs['amount'] - fee
+                prepared_tx = interacted_contract.functions[function_name].prepare(**kwargs)
+                tx = await prepared_tx.invoke(max_fee=int(fee * 1.1))
+            try:
+                receipt = await self.account.client.wait_for_tx(tx.hash, retries=10)
+                block = receipt.block_number
+                logger.debug(f"Транзакция ушла с кошелька {hex(self.address)} высота блока {block} хэш транзы {tx.hash}")
+                if block:
+                    return True
+            except Exception as exc:
+                logger.debug(f"Ошибка транзакции {exc}")
+
+        except Exception as exc:
+            logger.error(f"Couldn't send tx: {exc}")
+
+
+
+
