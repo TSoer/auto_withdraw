@@ -26,10 +26,10 @@ class AutoWithdraw(QtWidgets.QMainWindow, Ui_MainWindow):
         setup_logger(logging_handler)
 
     def start_work(self):
-        self.worker = Worker()
+        self.worker = Worker(self.ACCOUNTS_LIST)
         self.worker_thread = QThread()
         self.worker.moveToThread(self.worker_thread)
-        self.worker_thread.started.connect(lambda *args, **kwargs: self.worker.do_work(self.ACCOUNTS_LIST))
+        self.worker_thread.started.connect(lambda *args, **kwargs: self.worker.do_work())
         self.worker_thread.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
         self.worker_thread.finished.connect(self.worker.deleteLater)

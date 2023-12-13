@@ -22,7 +22,7 @@ def log_uncaught_exceptions(ex_cls, ex, tb) -> None:
 
 def main():
     # try:
-    sys.excepthook = log_uncaught_exceptions
+    # sys.excepthook = log_uncaught_exceptions
     app = QApplication(sys.argv)
     window = AutoWithdraw()
     window.show()

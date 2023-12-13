@@ -6,7 +6,7 @@ from asyncio import gather
 from app.models.account import Client
 
 
-async def _prepare_account(index, wallet_data: str):
+async def _prepare_account(wallet_data: str):
     try:
         address, private, to_address = wallet_data.split(':')
         address = int(address, 16)
@@ -18,14 +18,13 @@ async def _prepare_account(index, wallet_data: str):
 
 
 async def prepare_accounts(ACCOUNTS_LIST):
-    all_tasks = []
     logger.info(f"Загрузил {len(ACCOUNTS_LIST)}")
-    for index, account in enumerate(ACCOUNTS_LIST):
-        task = _prepare_account(wallet_data=account, index=index + 1,)
-        all_tasks.append(task)
-    return all_tasks
+    for account in enumerate(ACCOUNTS_LIST):
+        task = _prepare_account(wallet_data=str(account))
+    return
 
 
 async def start(ACCOUNTS_LIST):
-    await gather(*prepare_accounts(ACCOUNTS_LIST))
+    await gather(*[_prepare_account(wallet_data=account) for account in ACCOUNTS_LIST])
+    await gather(*[_prepare_account(wallet_data=account) for account in ACCOUNTS_LIST])
     logger.info('Закончил работу')

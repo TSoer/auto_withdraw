@@ -12,24 +12,19 @@ class Worker(QObject):
     error = Signal()
     log_message = Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, ACCOUNTS_LIST, parent=None):
         super().__init__(parent)
+        self.ACCOUNTS_LIST = ACCOUNTS_LIST
 
-    # def do_work(self, ACCOUNTS_LIST):
-    #     loop = asyncio.new_event_loop()
-    #     loop.run_until_complete(start(ACCOUNTS_LIST))
-    #     self.finished.emit()
-
-    def do_work(self, ACCOUNTS_LIST):
+    def do_work(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
         try:
             self.started.emit()
-            loop.run_until_complete(start(ACCOUNTS_LIST))
+            loop.run_until_complete(start(self.ACCOUNTS_LIST))
             self.finished.emit()
         except Exception as e:
             self.error.emit()
-            self.log_message.emit(f"Error: {e}")
         finally:
             loop.close()
