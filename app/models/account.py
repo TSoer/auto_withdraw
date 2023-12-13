@@ -155,5 +155,6 @@ class Client:
             logger.error(f"Couldn't send tx: {exc}")
 
     async def test_ui_interface(self):
-        time.sleep(5)
-        logger.info('какуого худолжника начал ключить визул')
+        for _ in range(10):
+            time.sleep(5)
+            logger.info('какуого худолжника начал ключить визул')

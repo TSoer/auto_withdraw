@@ -32,6 +32,7 @@ class AutoWithdraw(QtWidgets.QMainWindow, Ui_MainWindow):
         self.worker_thread.started.connect(lambda *args, **kwargs: self.worker.do_work(self.ACCOUNTS_LIST))
         self.worker_thread.finished.connect(self.worker.deleteLater)
         self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+        self.worker_thread.finished.connect(self.worker.deleteLater)
         self.worker_thread.start()
 
     def open_file(self, directory='', fmt='txt'):
