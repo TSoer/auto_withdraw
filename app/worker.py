@@ -14,7 +14,7 @@ from app.script.start_withdraw import start
 class Worker(QObject):
     finished = Signal()
     started = Signal()
-    error = Signal()
+    error = Signal(object)
     log_message = Signal(object)
 
     def __init__(self, ACCOUNTS_LIST, parent=None):

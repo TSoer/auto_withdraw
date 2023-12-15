@@ -19,6 +19,8 @@ class AutoWithdraw(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def __init__(self):
         super().__init__()
+        self.worker_thread = None
+        self.worker = None
         self.setupUi(self)
         self.pushButton.clicked.connect(lambda *args, **kwargs: self.load_file())
         self.btnStart.clicked.connect(lambda *arge, **kwargs: self.start_work())
@@ -62,5 +64,4 @@ class AutoWithdraw(QtWidgets.QMainWindow, Ui_MainWindow):
     def load_file(self):
         with open(self.open_file(), 'r') as file:
             self.ACCOUNTS_LIST = [x.rstrip() for x in file.readlines()]
-            print(self.ACCOUNTS_LIST, 'self.ACCOUNTS_LIST ')
 

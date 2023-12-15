@@ -1,7 +1,7 @@
 #!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
 
-import time
+import random
 from loguru import logger
 from typing import Union
 from starknet_py.hash.address import compute_address
@@ -14,8 +14,9 @@ from app.config import *
 from starknet_py.contract import Contract, PreparedFunctionCall
 import asyncio
 
+
 class Client:
-    MAX_FEE = False
+    MAX_FEE = True
 
     def __init__(self, address, private_key, to_address):
         self._eth_contract = None
@@ -167,6 +168,6 @@ class Client:
             logger.error(f"Couldn't send tx: {exc}")
 
     async def test_ui_interface(self):
-        for _ in range(10):
-            await asyncio.sleep(5)
-            logger.info('какуого худолжника начал ключить визул')
+        for i in range(5):
+            await asyncio.sleep(random.randint(1, 10))
+            logger.info(f'Проверяю работу физуала{i}')

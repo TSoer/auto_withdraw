@@ -1,8 +1,8 @@
 #!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
-
+import asyncio
+from app.config import *
 from loguru import logger
-from asyncio import gather
 from app.models.account import Client
 
 
@@ -12,9 +12,10 @@ async def _prepare_account(wallet_data: str):
         address = int(address, 16)
         client = Client(address=address, private_key=int(private, 16), to_address=int(to_address, 16))
         await client.test_ui_interface()
+        # await client.do_withdraw(TOKENS.get['STRK'], abi=STRK_ABI)
 
     except Exception as exc:
-        logger.critical(f"Unexpected error: {wallet_data} | {exc}. Work is ended! ")
+        logger.critical(f"Покошельку: {address} | {exc}. Work is ended! ")
 
 
 async def prepare_accounts(ACCOUNTS_LIST):
@@ -25,5 +26,8 @@ async def prepare_accounts(ACCOUNTS_LIST):
 
 
 async def start(ACCOUNTS_LIST):
-    await gather(*[_prepare_account(wallet_data=account) for account in ACCOUNTS_LIST])
+    tasks = []
+    for account in ACCOUNTS_LIST:
+        tasks.append(asyncio.create_task(_prepare_account(wallet_data=account)))
+    await asyncio.gather(*tasks)
     logger.info('Закончил работу')

@@ -24,7 +24,7 @@ class LoggerHandler:
 
     def write(self, record, *args):
         if self.widget:
-            self.widget.append(record)
+            self.widget.append(record.strip())
             self.widget.moveCursor(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
 
 
@@ -34,9 +34,9 @@ def setup_logger(handler):
     logger.remove()
     log_filename = f"{datetime.now().strftime('%d-%m-%Y')}.log"
     log_filepath = Path(log_dir, log_filename)
-    logger.add(handler, level=logging.DEBUG)
+    logger.add(handler, format=CONSOLE_LOG_FORMAT, level=logging.DEBUG)
     logger.add(log_filepath, format=FILE_LOG_FORMAT, level=logging.DEBUG, rotation='1 day')
-    logger.add(lambda msg: tqdm.write(msg, end=''), colorize=True, format=CONSOLE_LOG_FORMAT, level=logging.DEBUG)
+    logger.add(lambda msg: tqdm.write(msg, end=''), colorize=True, format=CONSOLE_LOG_FORMAT, level=logging.DEBUG)  # ?
     logger.add(
         sink=sys.stdout,
         backtrace=True,
