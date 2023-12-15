@@ -12,7 +12,7 @@ from starknet_py.net.models import StarknetChainId
 from starknet_py.net.signer.stark_curve_signer import KeyPair
 from app.config import *
 from starknet_py.contract import Contract, PreparedFunctionCall
-
+import asyncio
 
 class Client:
     MAX_FEE = False
@@ -168,5 +168,5 @@ class Client:
 
     async def test_ui_interface(self):
         for _ in range(10):
-            time.sleep(5)
+            await asyncio.sleep(5)
             logger.info('какуого худолжника начал ключить визул')

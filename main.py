@@ -22,20 +22,27 @@ def log_uncaught_exceptions(ex_cls, ex, tb) -> None:
     QMessageBox.critical(None, 'Error', text)
 
 
-def main():
-    # try:
-    # sys.excepthook = log_uncaught_exceptions
-    app = QApplication(sys.argv)
-    window = AutoWithdraw()
-    window.show()
-    sys.exit(app.exec())
-    # asyncio.set_event_loop_policy(QAsyncioEventLoopPolicy())
-    # asyncio.get_event_loop().run_forever()
-    # sys.exit(app.exec())
-    # except Exception as error:
-    #     logger.error(error)
-    #     sys.excepthook = log_uncaught_exceptions
+# def main():
+#     # try:
+#     # sys.excepthook = log_uncaught_exceptions
+#     app = QApplication(sys.argv)
+#     window = AutoWithdraw()
+#     window.show()
+#     asyncio.set_event_loop_policy(QAsyncioEventLoopPolicy())
+#     asyncio.get_event_loop().run_forever()
+#     # sys.exit(app.exec())
+#     # asyncio.set_event_loop_policy(QAsyncioEventLoopPolicy())
+#     # asyncio.get_event_loop().run_forever()
+#     # sys.exit(app.exec())
+#     # except Exception as error:
+#     #     logger.error(error)
+#     #     sys.excepthook = log_uncaught_exceptions
 
 
 if __name__ == '__main__':
-    main()
+    sys.excepthook = log_uncaught_exceptions
+    app = QApplication(sys.argv)
+    window = AutoWithdraw()
+    window.show()
+    asyncio.set_event_loop_policy(QAsyncioEventLoopPolicy())
+    asyncio.get_event_loop().run_forever()
