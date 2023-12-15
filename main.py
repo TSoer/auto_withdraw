@@ -1,10 +1,12 @@
 #!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
-
-
+import asyncio
 import os
 import sys
 import traceback
+
+from PySide6.QtAsyncio import QAsyncioEventLoopPolicy
+
 from app.main_app import AutoWithdraw
 from loguru import logger
 from PySide6.QtWidgets import QApplication, QMessageBox
@@ -27,6 +29,9 @@ def main():
     window = AutoWithdraw()
     window.show()
     sys.exit(app.exec())
+    # asyncio.set_event_loop_policy(QAsyncioEventLoopPolicy())
+    # asyncio.get_event_loop().run_forever()
+    # sys.exit(app.exec())
     # except Exception as error:
     #     logger.error(error)
     #     sys.excepthook = log_uncaught_exceptions

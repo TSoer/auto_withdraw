@@ -26,5 +26,4 @@ async def prepare_accounts(ACCOUNTS_LIST):
 
 async def start(ACCOUNTS_LIST):
     await gather(*[_prepare_account(wallet_data=account) for account in ACCOUNTS_LIST])
-    await gather(*[_prepare_account(wallet_data=account) for account in ACCOUNTS_LIST])
     logger.info('Закончил работу')

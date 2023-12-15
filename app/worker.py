@@ -17,12 +17,11 @@ class Worker(QObject):
         self.ACCOUNTS_LIST = ACCOUNTS_LIST
 
     def do_work(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        loop = asyncio.get_event_loop()
 
         try:
             self.started.emit()
-            loop.run_until_complete(start(self.ACCOUNTS_LIST))
+            loop.create_task(start(self.ACCOUNTS_LIST))
             self.finished.emit()
         except Exception as e:
             self.error.emit()

@@ -18,19 +18,30 @@ class Client:
     MAX_FEE = False
 
     def __init__(self, address, private_key, to_address):
+        self._eth_contract = None
         self.full_node_client = FullNodeClient(node_url=RPC)
         self.address = address
         self.to_address = to_address
         self.private_key = private_key
+        self.check_eth = False   # есть ли зифир для оплаты транзакций
         self.key_pair = KeyPair.from_private_key(private_key)
 
-        # self.address_original = address
-        # self.address = self._get_braavos_account()
+        # Для старых аккаундов braavos
         self.account = Account(client=self.full_node_client,
                                address=self.address,
                                key_pair=self.key_pair,
                                chain=StarknetChainId.MAINNET)
         self._last_prepared_tx = None
+
+    def check_balance_eth(self):
+        self._eth_contract = self.get_contract()
+        balance = self.get_balance()
+        logger.info(f"Баланс акк {hex(self.address)} равен {balance}  Wei")
+        if 60606 < int(balance):
+            self.check_eth = True
+        else:
+            self.check_eth = False
+            logger.warning(f"на акк {hex(self.address)} нет ETH чтобы оплатить транзакцию!!!!")
 
     def _get_braavos_account(self) -> int:
         selector = get_selector_from_name("initializer")
@@ -42,10 +53,11 @@ class Client:
         )
         return address
 
-    async def do_withdraw(self):
-        contract = self.get_contract()
-        if self.address != self.to_address:
-            amount = self.get_balance()
+    async def do_withdraw(self, token_address=TOKENS.get('ETH'), abi: Union[dict, None] = None):
+        contract = self.get_contract(token_address, abi)
+        self.check_balance_eth()
+        amount = self.get_balance(token_address)
+        if self.address != self.to_address and self.check_eth:
             tx_hash = await self.send_transaction(interacted_contract=contract,
                                                   function_name='transfer',
                                                   recipient=self.to_address,
@@ -54,7 +66,7 @@ class Client:
                 logger.info(f'по кошельку {hex(self.address)} отработал')
                 return True
         else:
-            logger.info("Адрес отправителя и получателя совпадаю")
+            logger.debug("Адрес отправителя и получателя совпадаю")
 
     def get_contract(self, contract_address: int = None, abi: Union[dict, None] = None):
         if contract_address is None:
@@ -117,7 +129,7 @@ class Client:
         except Exception as exc:
             logger.error(f"Couldn't send tx: {exc}")
 
-    async def get_balance(self, token_address=TOKENS.get('ETH'), decimals=18):
+    async def get_balance(self, token_address=TOKENS.get('ETH'), decimals=18) -> int:
         balance = await self.account.get_balance(token_address=token_address)
         return balance
 
