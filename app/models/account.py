@@ -24,9 +24,9 @@ class Client:
         self.address = address
         self.to_address = to_address
         self.private_key = private_key
-        self.check_eth = False   # есть ли зифир для оплаты транзакций
+        self.check_eth = False   # есть ли зефир для оплаты транзакций
         self.key_pair = KeyPair.from_private_key(private_key)
-
+        self.address = self._get_braavos_account()
         # Для старых аккаундов braavos
         self.account = Account(client=self.full_node_client,
                                address=self.address,
@@ -34,40 +34,51 @@ class Client:
                                chain=StarknetChainId.MAINNET)
         self._last_prepared_tx = None
 
-    def check_balance_eth(self):
+    async def check_balance_eth(self):
         self._eth_contract = self.get_contract()
-        balance = self.get_balance()
+        balance = await self.get_balance()
         logger.info(f"Баланс акк {hex(self.address)} равен {balance}  Wei")
         if 60606 < int(balance):
             self.check_eth = True
+            logger.info(f"на акк {hex(self.address)} есть {balance} токен ETH ")
+            return True
         else:
             self.check_eth = False
             logger.warning(f"на акк {hex(self.address)} нет ETH чтобы оплатить транзакцию!!!!")
+            return False
 
     def _get_braavos_account(self) -> int:
         selector = get_selector_from_name("initializer")
+
         calldata = [self.key_pair.public_key]
+
         address = compute_address(
             class_hash=BRAAVOS_PROXY_CLASS_HASH,
             constructor_calldata=[BRAAVOS_IMPLEMENTATION_CLASS_HASH, selector, len(calldata), *calldata],
             salt=self.key_pair.public_key,
         )
+
         return address
 
     async def do_withdraw(self, token_address=TOKENS.get('ETH'), abi: Union[dict, None] = None):
+        eth_check = await self.check_balance_eth()
         contract = self.get_contract(token_address, abi)
-        self.check_balance_eth()
-        amount = self.get_balance(token_address)
-        if self.address != self.to_address and self.check_eth:
-            tx_hash = await self.send_transaction(interacted_contract=contract,
-                                                  function_name='transfer',
-                                                  recipient=self.to_address,
-                                                  amount=amount)
-            if tx_hash:
-                logger.info(f'по кошельку {hex(self.address)} отработал')
-                return True
-        else:
-            logger.debug("Адрес отправителя и получателя совпадаю")
+        while True:
+            amount = await self.get_balance(token_address)
+            logger.info(f'количество STRK токенов на кошельке {hex(self.address)} amount = {amount}')
+            if eth_check and (int(amount) > 0):
+                if self.address != self.to_address:
+                    tx_hash = await self.send_transaction(interacted_contract=contract,
+                                                          function_name='transfer',
+                                                          recipient=self.to_address,
+                                                          amount=amount)
+                    if tx_hash:
+                        logger.info(f'по кошельку {hex(self.address)} отработал STRK {amount}')
+                        break
+                else:
+                    logger.debug("Адрес отправителя и получателя совпадаю")
+            else:
+                await asyncio.sleep(3)
 
     def get_contract(self, contract_address: int = None, abi: Union[dict, None] = None):
         if contract_address is None:
@@ -92,14 +103,14 @@ class Client:
         response = await _response()
         # ЧТОБЫ ПОТОМ ВЫСТОВЛЯТЬ ЦЕНУ ЗА ГАЗ
         # gas_price = response.get('gas_price')
-        # while gas_price >= Config.MAX_GWEI:
+        # while gas_price <= Config.MAX_GWEI:
         #     logger.warning(f"Current gas price: {gas_price} GWEI. Waiting to dump...")
         #     try:
         #         response = await _response()
         #         gas_price = response.get('gas_price')
         #     except Exception as exc:
         #         logger.error(exc)
-        #     await asyncio.sleep(randint(60, 120))
+
         overall_fee = response.get('overall_fee')
         return overall_fee
 
@@ -110,7 +121,7 @@ class Client:
 
             if Client.MAX_FEE:
                 # она отличается тем что сеть дает цену и библиотека умнажает ее на 1.5
-                tx = prepared_tx.invoke(auto_estimate=True)
+                tx = await prepared_tx.invoke(auto_estimate=True)
                 logger.info(f'цена за транзакцию беру максимальную которую предлагает сеть!!!')
                 # fee = self.account._get_max_fee()
             else:
@@ -171,3 +182,29 @@ class Client:
         for i in range(5):
             await asyncio.sleep(random.randint(1, 10))
             logger.info(f'Проверяю работу физуала{i}')
+
+    # async def upgrade_braavos(self):
+    #     contract = self.get_contract(self.address, BRAAVOS_ABI)
+    #
+    #     logger.info(f"[{hex(self.address)}] Upgrade account to cairo 1")
+    #
+    #     upgrade_call = contract.functions["upgrade_regenesis"].prepare(
+    #         BRAAVOS_IMPLEMENTATION_CLASS_HASH_NEW,
+    #         BRAAVOS_REGENESIS_ACCOUNT_ID
+    #     )
+    #
+    #     transaction = await self.sign_transaction([upgrade_call])
+    #
+    #     transaction_response = await self.send_transaction(transaction)
+    #
+    #     await self.wait_until_tx_finished(transaction_response.transaction_hash)
+    #
+    # async def wait_until_tx_finished(self, tx_hash: int):
+    #     await self.account.client.wait_for_tx(tx_hash, check_interval=10)
+    #
+    #     logger.success(f"[{hex(self.address)}] {self.explorer}{hex(tx_hash)} successfully!")
+    #
+    # async def send_transaction(self, transaction: Invoke):
+    #     transaction_response = await self.account.client.send_transaction(transaction)
+    #
+    #     return transaction_response
